@@ -6,6 +6,9 @@ import datetime
 import plotly.express as px
 import plotly.graph_objects as go
 import re
+from supabase import create_client
+# Initialize Supabase client
+supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 # ==========================================
 # 1. PAGE CONFIGURATION & BASE CSS
@@ -129,7 +132,7 @@ def render_inventory():
             
         with c2:
     # Replace your text input with this file uploader
-    uploaded_file = st.file_uploader("Upload Product Image" if lang == "en" else "رفع صورة المنتج", type=["jpg", "png", "jpeg"])
+            uploaded_file = st.file_uploader("Upload Product Image" if lang == "en" else "رفع صورة المنتج", type=["jpg", "png", "jpeg"])
     
     image_url = "" # Default empty string
     
