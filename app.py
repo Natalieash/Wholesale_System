@@ -120,12 +120,15 @@ def render_inventory():
         
         c1, c2, c3 = st.columns(3)
         with c1:
-            prod_id = st.text_input("Product ID" if lang == "en" else "كود المنتج")
             prod_name = st.text_input("Product Name" if lang == "en" else "اسم المنتج")
-            category_options = ["Yarn", "Beads", "Zippers", "Fabric", "Other"] if lang == "en" else ["خيوط", "خرز", "سحابات/سوست", "قماش", "أخرى"]
-            category = st.selectbox("Category" if lang == "en" else "الفئة", category_options)
-        
+            color_id = st.text_input("Color ID" if lang == "en" else "كود اللون")
+            category = st.selectbox("Category" if lang == "en" else "الفئة", ["Yarn", "Beads", "Zippers", "Fabric", "Other"])
+            # Auto-generate ID logic
+            prod_id = f"{category[:3].upper()}-{color_id.upper()}"
+            st.write(f"**Generated ID:** {prod_id}")
+            
         with c2:
+            image_url = st.text_input("Image URL" if lang == "en" else "رابط صورة المنتج")
             unit_price = st.number_input("Cost per Unit (EGP)" if lang == "en" else "تكلفة الوحدة (ج.م)", min_value=0.0, step=10.0)
             sell_unit_options = ["Kilo", "Cone", "Box", "Meter", "Piece", "Pack"] if lang == "en" else ["كيلو", "كونة", "علبة", "متر", "قطعة", "حزمة"]
             unit_type = st.selectbox("Selling Unit" if lang == "en" else "وحدة البيع", sell_unit_options)
@@ -134,7 +137,6 @@ def render_inventory():
         
         with c3:
             purchase_qty = st.number_input("Quantity Purchased" if lang == "en" else "الكمية المشتراة", min_value=0.0, step=1.0)
-            
             if purchase_unit == unit_type:
                 conv_factor = 1.0
                 st.info("No conversion needed." if lang == "en" else "لا يوجد تحويل مطلوب.")
@@ -155,16 +157,16 @@ def render_inventory():
                 try:
                     insert_query = """
                         INSERT INTO inventory_stock 
-                        (product_id, product_name, category, unit_type, purchase_unit, conversion_factor, unit_price, stock_quantity, total_value) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (product_id, product_name, color_id, image_url, category, unit_type, purchase_unit, conversion_factor, unit_price, stock_quantity, total_value) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """
-                    cur.execute(insert_query, (prod_id, prod_name, category, unit_type, purchase_unit, conv_factor, unit_price, base_qty_to_stock, total_value))
+                    cur.execute(insert_query, (prod_id, prod_name, color_id, image_url, category, unit_type, purchase_unit, conv_factor, unit_price, base_qty_to_stock, total_value))
                     conn.commit()
                     st.success("Added to stock!" if lang == "en" else "تمت الإضافة للمخزون بنجاح!")
                     time.sleep(1.5)
                     st.rerun()
                 except Exception as e:
-                    st.error("Error: Product ID might already exist." if lang == "en" else "خطأ: كود المنتج موجود مسبقاً.")
+                    st.error(f"Error: {e}" if lang == "en" else f"خطأ: {e}")
                 
                 cur.close()
                 conn.close()
