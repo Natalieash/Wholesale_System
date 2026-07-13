@@ -100,16 +100,12 @@ else:
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. DATABASE CONNECTION
+# 3. DATABASE CONNECTION (CLOUD SECURE)
 # ==========================================
 def get_connection():
-    return psycopg2.connect(
-        host="localhost", 
-        database="yarn_erp", 
-        user="postgres", 
-        password="your_password_here", 
-        port="5432"
-    )
+    # This tells your app to look inside a secure vault for the link, 
+    # instead of writing the password directly in the code!
+    return psycopg2.connect(st.secrets["DATABASE_URL"])
 
 # ==========================================
 # 4. FLATTENED PAGE FUNCTIONS
