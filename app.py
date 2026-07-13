@@ -152,13 +152,13 @@ def render_inventory():
             st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
         except Exception as e:
             st.error(f"Upload failed: {e}")
-            unit_price = st.number_input("Cost per Unit (EGP)" if lang == "en" else "تكلفة الوحدة (ج.م)", min_value=0.0, step=10.0)
-            sell_unit_options = ["Kilo", "Cone", "Box", "Meter", "Piece", "Pack"] if lang == "en" else ["كيلو", "كونة", "علبة", "متر", "قطعة", "حزمة"]
-            unit_type = st.selectbox("Selling Unit" if lang == "en" else "وحدة البيع", sell_unit_options)
-            purch_unit_options = ["Kilo", "Cone", "Box", "Meter", "Piece", "Pack", "Pallet", "Ton", "Roll"] if lang == "en" else ["كيلو", "كونة", "علبة", "متر", "قطعة", "حزمة", "بالتة", "طن", "رول"]
-            purchase_unit = st.selectbox("Purchased As" if lang == "en" else "وحدة الشراء", purch_unit_options)
+    unit_price = st.number_input("Cost per Unit (EGP)" if lang == "en" else "تكلفة الوحدة (ج.م)", min_value=0.0, step=10.0)
+    sell_unit_options = ["Kilo", "Cone", "Box", "Meter", "Piece", "Pack"] if lang == "en" else ["كيلو", "كونة", "علبة", "متر", "قطعة", "حزمة"]
+    unit_type = st.selectbox("Selling Unit" if lang == "en" else "وحدة البيع", sell_unit_options)
+    purch_unit_options = ["Kilo", "Cone", "Box", "Meter", "Piece", "Pack", "Pallet", "Ton", "Roll"] if lang == "en" else ["كيلو", "كونة", "علبة", "متر", "قطعة", "حزمة", "بالتة", "طن", "رول"]
+    purchase_unit = st.selectbox("Purchased As" if lang == "en" else "وحدة الشراء", purch_unit_options)
         
-        with c3:
+    with c3:
             purchase_qty = st.number_input("Quantity Purchased" if lang == "en" else "الكمية المشتراة", min_value=0.0, step=1.0)
             if purchase_unit == unit_type:
                 conv_factor = 1.0
@@ -167,13 +167,14 @@ def render_inventory():
                 conv_prompt = f"Units in 1 {purchase_unit}?" if lang == "en" else "كم عدد وحدات البيع في وحدة الشراء؟"
                 conv_factor = st.number_input(conv_prompt, min_value=1.0, value=1.0, step=1.0)
 
-        base_qty_to_stock = purchase_qty * conv_factor
-        total_value = unit_price * base_qty_to_stock
-        
-        info_text = f"**Adding:** {base_qty_to_stock:,.0f} | **Total Value:** {total_value:,.2f} EGP" if lang == "en" else f"**الإضافة للمخزن:** {base_qty_to_stock:,.0f} | **القيمة الإجمالية:** {total_value:,.2f} ج.م"
-        st.info(info_text)
+    # Compute base quantity to add to stock and total value
+    base_qty_to_stock = purchase_qty * conv_factor
+    total_value = unit_price * base_qty_to_stock
 
-        if st.button("Save to Inventory" if lang == "en" else "حفظ في المخزون", type="primary"):
+    info_text = f"**Adding:** {base_qty_to_stock:,.0f} | **Total Value:** {total_value:,.2f} EGP" if lang == "en" else f"**الإضافة للمخزن:** {base_qty_to_stock:,.0f} | **القيمة الإجمالية:** {total_value:,.2f} ج.م"
+    st.info(info_text)
+
+    if st.button("Save to Inventory" if lang == "en" else "حفظ في المخزون", type="primary"):
             if prod_id and prod_name:
                 conn = get_connection()
                 cur = conn.cursor()
