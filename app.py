@@ -144,32 +144,34 @@ def render_inventory():
             image_path = f"{prod_id}.jpg"
             
             try:
-                # 1. Save the Streamlit memory buffer to a temporary physical file
-                temp_file_path = f"temp_{prod_id}.jpg"
-                with open(temp_file_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
+                file_bytes = uploaded_file.getvalue()
                 
-                # 2. Upload the physical file to Supabase (bypassing the dict error)
-                with open(temp_file_path, "rb") as f:
-                    supabase.storage.from_("Product-images").upload(
-                        path=image_path,
-                        file=f,
-                        file_options={"upsert": "true", "content-type": "image/jpeg"}
-                    )
+                # 1. Strip trailing paths (like /rest/v1) from your URL to fix the PGRST125 routing error
+                raw_url = st.secrets["SUPABASE_URL"]
+                base_url = raw_url.split('/rest/v1')[0].split('/graphql')[0].rstrip('/')
                 
-                # 3. Clean up and delete the temporary file from your machine
-                import os
-                if os.path.exists(temp_file_path):
-                    os.remove(temp_file_path)
+                # 2. Build the exact Storage API endpoint directly
+                upload_url = f"{base_url}/storage/v1/object/Product-images/{image_path}"
                 
-                # 4. Get the public URL safely for your inventory table
-                res = supabase.storage.from_("Product-images").get_public_url(image_path)
-                if isinstance(res, dict):
-                    image_url = res.get("publicUrl", res.get("data", {}).get("publicUrl", ""))
+                headers = {
+                    "apikey": st.secrets["SUPABASE_KEY"],
+                    "Authorization": f"Bearer {st.secrets['SUPABASE_KEY']}",
+                    "Content-Type": "image/jpeg"
+                }
+                
+                # 3. Upload directly via HTTP to bypass the library's dict crash
+                import requests
+                response = requests.post(upload_url, data=file_bytes, headers=headers)
+                
+                if response.status_code in (200, 201, 205):
+                    image_url = f"{base_url}/storage/v1/object/public/Product-images/{image_path}"
+                    st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
                 else:
-                    image_url = str(res)
+                    # This will finally show the REAL error (likely a policy block) instead of crashing
+                    error_details = response.json() if "application/json" in response.headers.get("Content-Type", "") else response.text
+                    st.error(f"Supabase rejected the upload: {response.status_code} - {error_details}")
+                    image_url = ""
                     
-                st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
             except Exception as e:
                 st.error(f"Upload failed: {e}")
     unit_price = st.number_input("Cost per Unit (EGP)" if lang == "en" else "تكلفة الوحدة (ج.م)", min_value=0.0, step=10.0)
