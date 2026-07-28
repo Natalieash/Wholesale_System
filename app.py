@@ -144,16 +144,25 @@ def render_inventory():
             image_path = f"{prod_id}.jpg"
             
             try:
-                file_bytes = uploaded_file.getvalue()
+                # 1. Save the Streamlit memory buffer to a temporary physical file
+                temp_file_path = f"temp_{prod_id}.jpg"
+                with open(temp_file_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
                 
-                # Use the official client method with proper byte handling
-                supabase.storage.from_("Product-images").upload(
-                    path=image_path,
-                    file=file_bytes,
-                    file_options={"upsert": "true", "content-type": "image/jpeg"}
-                )
+                # 2. Upload the physical file to Supabase (bypassing the dict error)
+                with open(temp_file_path, "rb") as f:
+                    supabase.storage.from_("Product-images").upload(
+                        path=image_path,
+                        file=f,
+                        file_options={"upsert": "true", "content-type": "image/jpeg"}
+                    )
                 
-                # Get the public URL safely
+                # 3. Clean up and delete the temporary file from your machine
+                import os
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                
+                # 4. Get the public URL safely for your inventory table
                 res = supabase.storage.from_("Product-images").get_public_url(image_path)
                 if isinstance(res, dict):
                     image_url = res.get("publicUrl", res.get("data", {}).get("publicUrl", ""))
