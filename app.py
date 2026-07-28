@@ -572,6 +572,76 @@ def render_hr():
     if not df_employees.empty: 
         st.dataframe(df_employees, use_container_width=True, hide_index=True)
 
+    # --- EDIT OR DELETE AN EMPLOYEE ---
+    with st.expander("✏️ Edit or Delete Employee" if lang == "en" else "✏️ تعديل أو حذف موظف"):
+        cur.execute("SELECT employee_id, full_name, national_id, job_title, phone_number, base_salary FROM employees")
+        all_emps = cur.fetchall()
+        
+        if all_emps:
+            emp_options = {f"{emp[0]} - {emp[1]}": emp for emp in all_emps}
+            sel_prompt = "Select employee to manage:" if lang == "en" else "اختر الموظف لإدارته:"
+            sel_emp = st.selectbox(sel_prompt, list(emp_options.keys()))
+            
+            old_id, old_name, old_nid, old_role, old_phone, old_salary = emp_options[sel_emp]
+            
+            with st.form("edit_employee_form"):
+                st.write("Update the information below:" if lang == "en" else "قم بتحديث المعلومات أدناه:")
+                e_col1, e_col2 = st.columns(2)
+                
+                with e_col1:
+                    new_name = st.text_input("Full Name" if lang == "en" else "الاسم الكامل", value=old_name)
+                    new_phone = st.text_input("Phone Number" if lang == "en" else "رقم الهاتف", value=old_phone)
+                    # Ensure old_nid isn't None if it was left blank previously
+                    new_nid = st.text_input("National ID" if lang == "en" else "الرقم القومي", value=old_nid if old_nid else "")
+                    
+                with e_col2:
+                    roles_en = ["Sales Representative", "Warehouse Staff", "Driver", "Manager", "Accountant", "Other"]
+                    roles_ar = ["مندوب مبيعات", "موظف مخزن", "سائق", "مدير", "محاسب", "أخرى"]
+                    roles_list = roles_en if lang == "en" else roles_ar
+                    
+                    # Intelligently match the existing role across languages
+                    try:
+                        if old_role in roles_en: r_idx = roles_en.index(old_role)
+                        elif old_role in roles_ar: r_idx = roles_ar.index(old_role)
+                        else: r_idx = 0
+                    except ValueError: r_idx = 0
+                    
+                    new_role = st.selectbox("Job Title" if lang == "en" else "المسمى الوظيفي", roles_list, index=r_idx)
+                    new_salary = st.number_input("Monthly Base Salary (EGP)" if lang == "en" else "الراتب الأساسي (ج.م)", value=float(old_salary), step=500.0)
+                    
+                # --- UPDATE AND DELETE BUTTONS ---
+                c_btn1, c_btn2 = st.columns(2)
+                
+                with c_btn1:
+                    update_label = "Apply Updates" if lang == "en" else "تطبيق التحديثات"
+                    update_submitted = st.form_submit_button(update_label)
+                
+                with c_btn2:
+                    delete_label = "🗑️ Delete Employee" if lang == "en" else "🗑️ حذف الموظف"
+                    delete_submitted = st.form_submit_button(delete_label)
+                    
+                if update_submitted:
+                    update_query = """
+                        UPDATE employees 
+                        SET full_name = %s, national_id = %s, job_title = %s, phone_number = %s, base_salary = %s 
+                        WHERE employee_id = %s
+                    """
+                    cur.execute(update_query, (new_name, new_nid, new_role, new_phone, new_salary, old_id))
+                    conn.commit()
+                    
+                    st.success("✅ Employee updated! Refreshing..." if lang == "en" else "✅ تم تحديث بيانات الموظف! جاري التحديث...")
+                    time.sleep(1.5)
+                    st.rerun()
+                    
+                if delete_submitted:
+                    delete_query = "DELETE FROM employees WHERE employee_id = %s"
+                    cur.execute(delete_query, (old_id,))
+                    conn.commit()
+                    
+                    st.success("✅ Employee deleted! Refreshing..." if lang == "en" else "✅ تم حذف الموظف! جاري التحديث...")
+                    time.sleep(1.5)
+                    st.rerun()
+
     st.divider()
     with st.expander("💸 Run Payroll (Issue Salaries)" if lang == "en" else "💸 صرف الرواتب", expanded=False):
         cur.execute("SELECT employee_id, full_name, base_salary FROM employees")
