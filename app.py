@@ -156,7 +156,8 @@ def render_inventory():
                 headers = {
                     "apikey": st.secrets["SUPABASE_KEY"],
                     "Authorization": f"Bearer {st.secrets['SUPABASE_KEY']}",
-                    "Content-Type": "image/jpeg"
+                    "Content-Type": "image/jpeg",
+                    "x-upsert": "true"  # <--- Add this line right here!
                 }
                 
                 # 3. Upload directly via HTTP to bypass the library's dict crash
