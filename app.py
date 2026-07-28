@@ -241,8 +241,8 @@ def render_inventory():
             use_container_width=True, 
             hide_index=True,
             column_config={
-                "Picture": st.column_config.ImageColumn("Picture", width="small"),
-                "الصورة": st.column_config.ImageColumn("الصورة", width="small")
+                "Picture": st.column_config.ImageColumn("Picture", width="large"),
+                "الصورة": st.column_config.ImageColumn("الصورة", width="large")
             }
         )
 
