@@ -138,36 +138,37 @@ def render_inventory():
     image_url = "" # Default empty string
     
     if uploaded_file is not None:
-        image_path = f"public/{prod_id}.jpg"
-        
-        try:
-            file_bytes = uploaded_file.getvalue()
+        # Ensure prod_id exists before creating the path
+        if not prod_id or prod_id == "YAR-":
+            st.error("Please enter a valid product name/details first so a Product ID can be generated." if lang == "en" else "يرجى إدخال تفاصيل المنتج أولاً لتوليد الكود.")
+        else:
+            image_path = f"public/{prod_id}.jpg"
             
-            # Get your Supabase URL and Key from st.secrets
-            supabase_url = st.secrets["SUPABASE_URL"]
-            supabase_key = st.secrets["SUPABASE_KEY"]
-            
-            # Direct HTTP upload to bypass client library bugs
-            upload_url = f"{supabase_url}/storage/v1/object/Product-images/{image_path}"
-            headers = {
-                "apikey": supabase_key,
-                "Authorization": f"Bearer {supabase_key}",
-                "Content-Type": "image/jpeg"
-            }
-            
-            import requests
-            response = requests.post(upload_url, data=file_bytes, headers=headers)
-            
-            if response.status_code == 200 or response.status_code == 205:
-                # Construct the permanent public URL directly
-                image_url = f"{supabase_url}/storage/v1/object/public/Product-images/{image_path}"
-                st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
-            else:
-                st.error(f"Upload failed: {response.text}")
-                image_url = ""
+            try:
+                file_bytes = uploaded_file.getvalue()
                 
-        except Exception as e:
-            st.error(f"Upload failed: {e}")
+                supabase_url = st.secrets["SUPABASE_URL"]
+                supabase_key = st.secrets["SUPABASE_KEY"]
+                
+                upload_url = f"{supabase_url}/storage/v1/object/Product-images/{image_path}"
+                headers = {
+                    "apikey": supabase_key,
+                    "Authorization": f"Bearer {supabase_key}",
+                    "Content-Type": "image/jpeg"
+                }
+                
+                import requests
+                response = requests.post(upload_url, data=file_bytes, headers=headers)
+                
+                if response.status_code == 200 or response.status_code == 205:
+                    image_url = f"{supabase_url}/storage/v1/object/public/Product-images/{image_path}"
+                    st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
+                else:
+                    st.error(f"Upload failed: {response.text}")
+                    image_url = ""
+                    
+            except Exception as e:
+                st.error(f"Upload failed: {e}")
     unit_price = st.number_input("Cost per Unit (EGP)" if lang == "en" else "تكلفة الوحدة (ج.م)", min_value=0.0, step=10.0)
     sell_unit_options = ["Kilo", "Cone", "Box", "Meter", "Piece", "Pack"] if lang == "en" else ["كيلو", "كونة", "علبة", "متر", "قطعة", "حزمة"]
     unit_type = st.selectbox("Selling Unit" if lang == "en" else "وحدة البيع", sell_unit_options)
