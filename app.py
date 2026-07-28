@@ -143,21 +143,29 @@ def render_inventory():
         try:
             file_bytes = uploaded_file.getvalue()
             
-            supabase.storage.from_("Product-images").upload(
-                path=image_path, 
-                file=file_bytes, 
-                file_options={"upsert": "true", "content-type": "image/jpeg"}
-            )
+            # Get your Supabase URL and Key from st.secrets
+            supabase_url = st.secrets["SUPABASE_URL"]
+            supabase_key = st.secrets["SUPABASE_KEY"]
             
-            res = supabase.storage.from_("Product-images").get_public_url(image_path)
-
-            # Safely parse the response whether it's a nested dictionary or string
-            if isinstance(res, dict):
-                image_url = res.get("publicUrl", res.get("data", {}).get("publicUrl", ""))
+            # Direct HTTP upload to bypass client library bugs
+            upload_url = f"{supabase_url}/storage/v1/object/Product-images/{image_path}"
+            headers = {
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "image/jpeg"
+            }
+            
+            import requests
+            response = requests.post(upload_url, data=file_bytes, headers=headers)
+            
+            if response.status_code == 200 or response.status_code == 205:
+                # Construct the permanent public URL directly
+                image_url = f"{supabase_url}/storage/v1/object/public/Product-images/{image_path}"
+                st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
             else:
-                image_url = str(res)
+                st.error(f"Upload failed: {response.text}")
+                image_url = ""
                 
-            st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
         except Exception as e:
             st.error(f"Upload failed: {e}")
     unit_price = st.number_input("Cost per Unit (EGP)" if lang == "en" else "تكلفة الوحدة (ج.م)", min_value=0.0, step=10.0)
