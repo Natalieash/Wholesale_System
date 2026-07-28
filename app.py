@@ -150,11 +150,12 @@ def render_inventory():
             )
             
             res = supabase.storage.from_("product-images").get_public_url(image_path)
-            
+
+            # Safely parse the response whether it's a nested dictionary or string
             if isinstance(res, dict):
-                image_url = res.get("publicUrl", "")
+                image_url = res.get("publicUrl", res.get("data", {}).get("publicUrl", ""))
             else:
-                image_url = res
+                image_url = str(res)
                 
             st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
         except Exception as e:
