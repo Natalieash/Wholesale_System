@@ -23,8 +23,11 @@ if "logged_in" not in st.session_state:
 # LOGIN SCREEN (If not logged in)
 # ==========================================
 if not st.session_state["logged_in"]:
-    st.title("🔒 System Login")
+    # Open your custom CSS styling box right before the title
+    st.markdown('<div class="login-box">', unsafe_allow_html=True)
     
+    st.title("🔒 System Login")
+
     with st.form("login_form"):
         input_user = st.text_input("Username")
         input_pass = st.text_input("Password", type="password") # Hides typing with stars
@@ -49,7 +52,7 @@ if not st.session_state["logged_in"]:
                 
             cur.close()
             conn.close()
-
+    st.markdown('</div>', unsafe_allow_html=True)
 # ==========================================
 # SECURE DASHBOARD (If logged in)
 # ==========================================
