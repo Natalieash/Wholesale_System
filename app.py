@@ -336,8 +336,23 @@ def render_inventory():
                     new_price = st.number_input("Unit Price" if lang == "en" else "سعر الوحدة", value=float(old_price), step=1.0)
                     new_qty = st.number_input("Quantity in Stock" if lang == "en" else "الكمية في المخزن", value=float(old_qty), step=1.0)
                     
-                submit_label = "Apply Corrections" if lang == "en" else "تطبيق التعديلات"
-                if st.form_submit_button(submit_label):
+                # --- UPDATE AND DELETE BUTTONS ---
+                c_btn1, c_btn2 = st.columns(2)
+                
+                with c_btn1:
+                    submit_label = "Apply Corrections" if lang == "en" else "تطبيق التعديلات"
+                    update_submitted = st.form_submit_button(submit_label)
+                
+                with c_btn2:
+                    # Only show the delete button if the logged-in user is an Owner
+                    if st.session_state.get("role") == "Owner":
+                        delete_label = "🗑️ Delete Product" if lang == "en" else "🗑️ حذف المنتج"
+                        delete_submitted = st.form_submit_button(delete_label)
+                    else:
+                        delete_submitted = False
+                        
+                # --- LOGIC IF UPDATE IS CLICKED ---
+                if update_submitted:
                     new_total = new_price * new_qty
                     
                     update_query = """
@@ -350,6 +365,16 @@ def render_inventory():
                     conn.commit()
                     
                     st.success("✅ Product updated! Refreshing..." if lang == "en" else "✅ تم تحديث المنتج! جاري التحديث...")
+                    time.sleep(1.5)
+                    st.rerun()
+                    
+                # --- LOGIC IF DELETE IS CLICKED ---
+                if delete_submitted:
+                    delete_query = "DELETE FROM inventory_stock WHERE product_id = %s"
+                    cur.execute(delete_query, (old_id,))
+                    conn.commit()
+                    
+                    st.success("✅ Product deleted! Refreshing..." if lang == "en" else "✅ تم حذف المنتج! جاري التحديث...")
                     time.sleep(1.5)
                     st.rerun()
                     
