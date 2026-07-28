@@ -141,33 +141,26 @@ def render_inventory():
         if not prod_id or prod_id == "YAR-":
             st.error("Please enter a valid product name/details first so a Product ID can be generated." if lang == "en" else "يرجى إدخال تفاصيل المنتج أولاً لتوليد الكود.")
         else:
-            # Change the path to upload directly to the bucket root
             image_path = f"{prod_id}.jpg"
             
             try:
                 file_bytes = uploaded_file.getvalue()
                 
-                supabase_url = st.secrets["SUPABASE_URL"]
-                supabase_key = st.secrets["SUPABASE_KEY"]
+                # Use the official client method with proper byte handling
+                supabase.storage.from_("Product-images").upload(
+                    path=image_path,
+                    file=file_bytes,
+                    file_options={"upsert": "true", "content-type": "image/jpeg"}
+                )
                 
-                upload_url = f"{supabase_url}/storage/v1/object/Product-images/{image_path}"
-                headers = {
-                    "apikey": supabase_key,
-                    "Authorization": f"Bearer {supabase_key}",
-                    "Content-Type": "image/jpeg"
-                }
-                
-                import requests
-                response = requests.post(upload_url, data=file_bytes, headers=headers)
-                
-                if response.status_code == 200 or response.status_code == 205:
-                    # Update public URL to match the root filename
-                    image_url = f"{supabase_url}/storage/v1/object/public/Product-images/{image_path}"
-                    st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
+                # Get the public URL safely
+                res = supabase.storage.from_("Product-images").get_public_url(image_path)
+                if isinstance(res, dict):
+                    image_url = res.get("publicUrl", res.get("data", {}).get("publicUrl", ""))
                 else:
-                    st.error(f"Upload failed: {response.text}")
-                    image_url = ""
+                    image_url = str(res)
                     
+                st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
             except Exception as e:
                 st.error(f"Upload failed: {e}")
     unit_price = st.number_input("Cost per Unit (EGP)" if lang == "en" else "تكلفة الوحدة (ج.م)", min_value=0.0, step=10.0)
