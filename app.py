@@ -133,24 +133,29 @@ def render_inventory():
             st.write(f"**Generated ID:** {prod_id}")
             
         with c2:
-    # Replace your text input with this file uploader
             uploaded_file = st.file_uploader("Upload Product Image" if lang == "en" else "رفع صورة المنتج", type=["jpg", "png", "jpeg"])
     
     image_url = "" # Default empty string
     
     if uploaded_file is not None:
-        # Define a path using the Product ID (matches your bucket name)
         image_path = f"public/{prod_id}.jpg"
         
         try:
-            # Upload the file to the 'product-images' bucket
+            file_bytes = uploaded_file.getvalue()
+            
             supabase.storage.from_("product-images").upload(
                 path=image_path, 
-                file=uploaded_file.getvalue(), 
+                file=file_bytes, 
                 file_options={"upsert": "true", "content-type": "image/jpeg"}
             )
-            # Retrieve the permanent public URL
-            image_url = supabase.storage.from_("product-images").get_public_url(image_path)
+            
+            res = supabase.storage.from_("product-images").get_public_url(image_path)
+            
+            if isinstance(res, dict):
+                image_url = res.get("publicUrl", "")
+            else:
+                image_url = res
+                
             st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
         except Exception as e:
             st.error(f"Upload failed: {e}")
