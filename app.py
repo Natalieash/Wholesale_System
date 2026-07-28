@@ -246,6 +246,44 @@ def render_inventory():
             }
         )
 
+# --- PRODUCT DETAILS VIEWER ---
+    st.divider()
+    st.subheader("View Product Details" if lang == "en" else "عرض تفاصيل المنتج")
+    
+    if not df_inv.empty:
+        # 1. Figure out the correct column name for the ID based on language
+        id_col = "ID" if lang == "en" else "الكود"
+        
+        # 2. Create a dropdown menu to select a product
+        selected_id = st.selectbox(
+            "Select a Product ID:" if lang == "en" else "اختر كود المنتج:", 
+            options=df_inv[id_col].tolist()
+        )
+        
+        if selected_id:
+            # 3. Pull the specific data for the chosen product
+            product_data = df_inv[df_inv[id_col] == selected_id].iloc[0]
+            
+            # 4. Split the screen: Image on the left (1/3 width), Details on the right (2/3 width)
+            c1, c2 = st.columns([1, 2])
+            
+            with c1:
+                pic_col = "Picture" if lang == "en" else "الصورة"
+                img_url = product_data[pic_col]
+                
+                # Check if an image URL exists and display it massive!
+                if pd.notnull(img_url) and str(img_url).strip() != "":
+                    st.image(img_url, use_container_width=True)
+                else:
+                    st.info("No image uploaded." if lang == "en" else "لم يتم رفع صورة.")
+                    
+            with c2:
+                # Loop through all the columns in the table and display them neatly
+                for col_name in df_inv.columns:
+                    # Skip showing the raw URL link in the text details
+                    if col_name != pic_col: 
+                        st.markdown(f"**{col_name}:** {product_data[col_name]}")
+
     # --- 3. EDIT A MISTAKE (RESTORED & TRANSLATED) ---
     expander_title = "✏️ Edit a Product Mistake" if lang == "en" else "✏️ تعديل خطأ في منتج"
     with st.expander(expander_title):
