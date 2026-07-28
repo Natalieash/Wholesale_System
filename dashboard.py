@@ -8,23 +8,19 @@ st.set_page_config(layout="wide")
 
 st.markdown("""
 <style>
-.login-box {
+/* Target the native Streamlit form container */
+[data-testid="stForm"] {
     max-width: 400px;
     margin: 0 auto;
     padding: 2rem;
     border-radius: 10px;
     background-color: #ffffff;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: none;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 1. Database Connection Helper
-def get_connection():
-    return psycopg2.connect(
-        host="localhost", database="yarn_erp", user="postgres",
-        password="nat", port="5432"
-    )
 
 # 1. Database Connection Helper
 def get_connection():
