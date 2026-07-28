@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import re
 from supabase import create_client
+
 # Initialize Supabase client
 supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
@@ -19,6 +20,21 @@ st.set_page_config(
     layout="wide", 
     initial_sidebar_state="expanded"
 )
+
+st.markdown("""
+<style>
+[data-testid="stForm"] {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: none;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 # Base CSS (Hides Streamlit branding and styles the layout)
 st.markdown("""
