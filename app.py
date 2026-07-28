@@ -138,11 +138,11 @@ def render_inventory():
     image_url = "" # Default empty string
     
     if uploaded_file is not None:
-        # Ensure prod_id exists before creating the path
         if not prod_id or prod_id == "YAR-":
             st.error("Please enter a valid product name/details first so a Product ID can be generated." if lang == "en" else "يرجى إدخال تفاصيل المنتج أولاً لتوليد الكود.")
         else:
-            image_path = f"public/{prod_id}.jpg"
+            # Change the path to upload directly to the bucket root
+            image_path = f"{prod_id}.jpg"
             
             try:
                 file_bytes = uploaded_file.getvalue()
@@ -161,6 +161,7 @@ def render_inventory():
                 response = requests.post(upload_url, data=file_bytes, headers=headers)
                 
                 if response.status_code == 200 or response.status_code == 205:
+                    # Update public URL to match the root filename
                     image_url = f"{supabase_url}/storage/v1/object/public/Product-images/{image_path}"
                     st.success("Image uploaded successfully!" if lang == "en" else "تم رفع الصورة بنجاح!")
                 else:
