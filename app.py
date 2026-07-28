@@ -21,20 +21,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
-<style>
-[data-testid="stForm"] {
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 2rem;
-    border-radius: 10px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border: none;
-}
-</style>
-""", unsafe_allow_html=True)
-
 
 # Base CSS (Hides Streamlit branding and styles the layout)
 st.markdown("""
@@ -1068,7 +1054,7 @@ def render_logistics():
 # ==========================================
 
 if not st.session_state["logged_in"]:
-    st.markdown('<div class="login-box">', unsafe_allow_html=True)
+    
     st.title("🔒 System Login" if lang == "en" else "🔒 تسجيل الدخول")
     st.caption("Wholesale Enterprise Management" if lang == "en" else "نظام إدارة تجارة الجملة")
     
@@ -1096,7 +1082,7 @@ if not st.session_state["logged_in"]:
         st.session_state["language"] = None
         st.rerun()
         
-    st.markdown('</div>', unsafe_allow_html=True)
+    
 
 else:
     # --- The Sidebar Navigation ---
