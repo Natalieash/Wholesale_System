@@ -143,13 +143,13 @@ def render_inventory():
         try:
             file_bytes = uploaded_file.getvalue()
             
-            supabase.storage.from_("product-images").upload(
+            supabase.storage.from_("Product-images").upload(
                 path=image_path, 
                 file=file_bytes, 
                 file_options={"upsert": "true", "content-type": "image/jpeg"}
             )
             
-            res = supabase.storage.from_("product-images").get_public_url(image_path)
+            res = supabase.storage.from_("Product-images").get_public_url(image_path)
 
             # Safely parse the response whether it's a nested dictionary or string
             if isinstance(res, dict):
