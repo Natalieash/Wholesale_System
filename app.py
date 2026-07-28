@@ -513,7 +513,7 @@ def render_hr():
     conn = get_connection()
     cur = conn.cursor()
     
-    # Auto-create tables if missing
+    # Auto-create tables if missing (now includes national_id)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS employees (
             employee_id SERIAL PRIMARY KEY, 
@@ -521,10 +521,18 @@ def render_hr():
             job_title VARCHAR(50), 
             phone_number VARCHAR(20), 
             base_salary NUMERIC DEFAULT 0, 
-            hire_date DATE DEFAULT CURRENT_DATE
+            hire_date DATE DEFAULT CURRENT_DATE,
+            national_id VARCHAR(50)
         )
     """)
     conn.commit()
+    
+    # Safely add the new column to your existing database without crashing
+    try:
+        cur.execute("ALTER TABLE employees ADD COLUMN national_id VARCHAR(50)")
+        conn.commit()
+    except Exception:
+        conn.rollback() # If the column already exists, it ignores the error and moves on safely!
 
     with st.expander("➕ Hire / Add New Employee" if lang == "en" else "➕ تعيين / إضافة موظف جديد", expanded=False):
         with st.form("add_employee_form"):
@@ -532,6 +540,7 @@ def render_hr():
             with c_name:
                 emp_name = st.text_input("Full Name" if lang == "en" else "الاسم الكامل")
                 emp_phone = st.text_input("Phone Number" if lang == "en" else "رقم الهاتف")
+                emp_nid = st.text_input("National ID" if lang == "en" else "الرقم القومي")
             with c_role:
                 roles_en = ["Sales Representative", "Warehouse Staff", "Driver", "Manager", "Accountant", "Other"]
                 roles_ar = ["مندوب مبيعات", "موظف مخزن", "سائق", "مدير", "محاسب", "أخرى"]
@@ -540,22 +549,25 @@ def render_hr():
             
             if st.form_submit_button("Add Employee" if lang == "en" else "إضافة الموظف"):
                 if emp_name:
-                    cur.execute("INSERT INTO employees (full_name, job_title, phone_number, base_salary) VALUES (%s, %s, %s, %s)", (emp_name, emp_role, emp_phone, emp_salary))
+                    # Added national_id to the database insert
+                    cur.execute("INSERT INTO employees (full_name, job_title, phone_number, base_salary, national_id) VALUES (%s, %s, %s, %s, %s)", (emp_name, emp_role, emp_phone, emp_salary, emp_nid))
                     conn.commit()
                     st.success("Added to team!" if lang == "en" else "تمت إضافته للفريق!")
                     time.sleep(1.5)
                     st.rerun()
 
     st.subheader("Current Staff Directory" if lang == "en" else "دليل الموظفين الحاليين")
+    # Added National ID to the search query
     query_emp = """
-        SELECT employee_id as "ID", full_name as "Name", job_title as "Role", 
+        SELECT employee_id as "ID", full_name as "Name", national_id as "National ID", job_title as "Role", 
                phone_number as "Phone", base_salary as "Salary (EGP)", hire_date as "Hired On" 
         FROM employees ORDER BY employee_id
     """
     df_employees = pd.read_sql(query_emp, conn)
     
+    # Added National ID to the Arabic translations
     if lang == "ar" and not df_employees.empty: 
-        df_employees.columns = ["الكود", "الاسم", "الوظيفة", "الهاتف", "الراتب (ج.م)", "تاريخ التعيين"]
+        df_employees.columns = ["الكود", "الاسم", "الرقم القومي", "الوظيفة", "الهاتف", "الراتب (ج.م)", "تاريخ التعيين"]
         
     if not df_employees.empty: 
         st.dataframe(df_employees, use_container_width=True, hide_index=True)
