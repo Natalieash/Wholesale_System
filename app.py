@@ -203,7 +203,7 @@ def render_inventory():
     
     conn = get_connection()
     query_inv = """
-        SELECT product_id as "ID", product_name as "Name", category as "Category", 
+        SELECT product_id as "ID", image_url as "Picture", product_name as "Name", category as "Category", 
                unit_type as "Unit", unit_price as "Price (EGP)", 
                stock_quantity as "Qty", total_value as "Total Value" 
         FROM inventory_stock 
@@ -212,10 +212,18 @@ def render_inventory():
     df_inv = pd.read_sql(query_inv, conn)
     
     if lang == "ar" and not df_inv.empty:
-        df_inv.columns = ["الكود", "الاسم", "الفئة", "الوحدة", "السعر", "الكمية", "القيمة الإجمالية"]
+        df_inv.columns = ["الكود", "الصورة", "الاسم", "الفئة", "الوحدة", "السعر", "الكمية", "القيمة الإجمالية"]
         
     if not df_inv.empty: 
-        st.dataframe(df_inv, use_container_width=True, hide_index=True)
+        st.dataframe(
+            df_inv, 
+            use_container_width=True, 
+            hide_index=True,
+            column_config={
+                "Picture": st.column_config.ImageColumn("Picture", width="small"),
+                "الصورة": st.column_config.ImageColumn("الصورة", width="small")
+            }
+        )
 
     # --- 3. EDIT A MISTAKE (RESTORED & TRANSLATED) ---
     expander_title = "✏️ Edit a Product Mistake" if lang == "en" else "✏️ تعديل خطأ في منتج"
